@@ -1,0 +1,62 @@
+# Node modules (React)
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.vite/
+
+# Python virtual environment
+backend/.venv/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+*.env
+.env
+.env.*
+
+# FastAPI specific
+backend/.mypy_cache/
+backend/.pytest_cache/
+backend/.vscode/
+backend/.env
+backend/alembic.ini
+
+# System / Editor
+.DS_Store
+*.swp
+*.swo
+.vscode/
+.idea/
+*.log
+
+# OS-specific
+Thumbs.db
+ehthumbs.db
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
