@@ -12,3 +12,4 @@ class Users(SQLModel, table=True):
     password_hash: str = Field(max_length=255)
     role: str = Field(default="user", max_length=50)
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
