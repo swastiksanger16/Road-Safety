@@ -1,5 +1,5 @@
 import React from 'react';
-import { MapPin, AlertTriangle, Users, Smartphone, ChevronRight } from 'lucide-react';
+import { MapPin, AlertTriangle, Users, Smartphone, Flame, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import img from '../assests/img1.jpeg'
 
@@ -13,9 +13,9 @@ const LandingPage: React.FC = () => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-              Live Road Hazard Alert and{' '}
+              Drive Safer with Crowdsourced Reports{' '}
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-orange-500">
-                Mapping System
+                 & Real-Time Alerts
               </span>
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-4xl mx-auto leading-relaxed font-bold">"Empowering communities to make roads safer — one report at a time."</p>
@@ -64,8 +64,8 @@ const LandingPage: React.FC = () => {
 
             <div className="absolute -bottom-4 -right-4 sm:-right-8 bg-white rounded-xl shadow-lg p-4 animate-pulse">
               <div className="flex items-center space-x-2">
-                <MapPin className="h-6 w-6 text-blue-500" />
-                <span className="text-sm font-medium">Location Tracked</span>
+                <Flame className="h-6 w-6 text-blue-500" />
+                <span className="text-sm font-medium">Accident Reported</span>
               </div>
             </div>
           </div>

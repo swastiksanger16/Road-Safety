@@ -24,19 +24,20 @@ const Header: React.FC = () => {
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-24">
           {/* Logo and Brand */}
           <Link
             to="/"
             className="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
           >
             <div className="relative">
-              <MapPin className="h-8 w-8 text-blue-600" />
-              <Shield className="h-4 w-4 text-orange-500 absolute -top-1 -right-1" />
+              <MapPin className="h-16 w-8 text-blue-600" />
+              <Shield className="h-12 w-4 text-orange-500 absolute -top-1 -right-1" />
             </div>
-            <span className="font-extrabold text-xl sm:text-2xl text-gray-900 block">
-              Satraksha
-            </span>
+            <span className="font-extrabold text-3xl sm:text-5xl tracking-tight text-orange-500">
+  Sat<span className="text-blue-500">raksha</span>
+</span>
+
           </Link>
 
           {/* Desktop Nav */}
