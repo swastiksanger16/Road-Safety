@@ -1,18 +1,17 @@
 from fastapi import FastAPI
-from sqlmodel import SQLModel
-from db.session import engine
-# from api import auth
-# from api import users, hazard
-from models import event_listeners
-# from api.users import router as users_router
-from api.hazard import router as hazard_router
-from api.auth import router as auth_router
-from api.comment import router as comment_router
 from fastapi.middleware.cors import CORSMiddleware
+from api.auth import router as auth_router
+from api.users import router as user_router
+from api.hazard import router as hazard_router
+from api.comment import router as comment_router
+from api.files import router as files_router
 
 app = FastAPI()
 
-origins = ["http://localhost:5173"]
+origins = [
+    "http://localhost:5173",  # Frontend
+]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -21,10 +20,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-
+# Routers
 app.include_router(auth_router, prefix="/api/auth", tags=["Auth"])
-#app.include_router(users_router, prefix="/api/users", tags=["Users"])
+app.include_router(user_router, prefix="/api/users", tags=["Users"])
 app.include_router(hazard_router, prefix="/api/hazards", tags=["Hazards"])
 app.include_router(comment_router, prefix="/api/comments", tags=["Comments"])
-
+app.include_router(files_router, prefix="/api/files", tags=["Files"])

@@ -1,7 +1,7 @@
 import React from 'react';
 import { MapPin, AlertTriangle, Users, Smartphone, Flame, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import img from '../assests/img1.jpeg'
+import img from '../assets/img1.jpeg'
 
 const LandingPage: React.FC = () => {
   const navigate = useNavigate();

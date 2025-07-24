@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends
 from sqlmodel import Session
-from schemas.users import UserCreate, Token
+from schemas.users import UserCreate, Token, UserOut
 from services.auth_service import register_user, authenticate_user
 from db.session import get_session
 from fastapi.security import OAuth2PasswordRequestForm
+from core.deps import get_current_user
 
 router = APIRouter()
 
@@ -14,3 +15,7 @@ def signup(user: UserCreate, session: Session = Depends(get_session)):
 @router.post("/login", response_model=Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), session: Session = Depends(get_session)):
     return authenticate_user(session, form_data)
+
+@router.get("/validate-token", response_model=UserOut)
+def validate_token(current_user: UserOut = Depends(get_current_user)):
+    return current_user

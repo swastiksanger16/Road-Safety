@@ -1,19 +1,31 @@
 import React, { useEffect, useState } from 'react';
 import { MapPin, Shield, Menu, X } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 const Header: React.FC = () => {
   const location = useLocation();
   const currentPage = location.pathname;
+  const navigate = useNavigate();
 
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener('scroll', handleScroll);
+
+    const token = localStorage.getItem('access_token');
+    setIsLoggedIn(!!token); // check if token exists
+
     return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  }, [location]); // re-check token on route change
+
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    setIsLoggedIn(false);
+    navigate('/');
+  };
 
   return (
     <header
@@ -35,28 +47,46 @@ const Header: React.FC = () => {
               <Shield className="h-12 w-4 text-orange-500 absolute -top-1 -right-1" />
             </div>
             <span className="font-extrabold text-3xl sm:text-5xl tracking-tight text-orange-500">
-  Sat<span className="text-blue-500">raksha</span>
-</span>
-
+              Sat<span className="text-blue-500">raksha</span>
+            </span>
           </Link>
 
           {/* Desktop Nav */}
           <div className="hidden sm:flex items-center space-x-3">
-            {currentPage !== '/login' && (
-              <Link
-                to="/login"
-                className="px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 hover:bg-gray-50 rounded-lg"
-              >
-                Login
-              </Link>
-            )}
-            {currentPage !== '/signup' && (
-              <Link
-                to="/signup"
-                className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
-              >
-                Sign Up
-              </Link>
+            {isLoggedIn ? (
+              <>
+                <Link
+                  to="/overview"
+                  className="px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 hover:bg-gray-50 rounded-lg"
+                >
+                  Overview
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                {currentPage !== '/login' && (
+                  <Link
+                    to="/login"
+                    className="px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 hover:bg-gray-50 rounded-lg"
+                  >
+                    Login
+                  </Link>
+                )}
+                {currentPage !== '/signup' && (
+                  <Link
+                    to="/signup"
+                    className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
+                  >
+                    Sign Up
+                  </Link>
+                )}
+              </>
             )}
           </div>
 
@@ -74,23 +104,46 @@ const Header: React.FC = () => {
         {/* Mobile Dropdown Menu */}
         {menuOpen && (
           <div className="sm:hidden mt-2 space-y-2 pb-4">
-            {currentPage !== '/login' && (
-              <Link
-                to="/login"
-                className="block px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 hover:bg-gray-50 rounded-lg"
-                onClick={() => setMenuOpen(false)}
-              >
-                Login
-              </Link>
-            )}
-            {currentPage !== '/signup' && (
-              <Link
-                to="/signup"
-                className="block px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-all duration-200 mx-4"
-                onClick={() => setMenuOpen(false)}
-              >
-                Sign Up
-              </Link>
+            {isLoggedIn ? (
+              <>
+                <Link
+                  to="/overview"
+                  className="block px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 hover:bg-gray-50 rounded-lg"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Overview
+                </Link>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setMenuOpen(false);
+                  }}
+                  className="block w-full text-left px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-all duration-200 mx-4"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                {currentPage !== '/login' && (
+                  <Link
+                    to="/login"
+                    className="block px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 hover:bg-gray-50 rounded-lg"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Login
+                  </Link>
+                )}
+                {currentPage !== '/signup' && (
+                  <Link
+                    to="/signup"
+                    className="block px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-all duration-200 mx-4"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Sign Up
+                  </Link>
+                )}
+              </>
             )}
           </div>
         )}

@@ -25,6 +25,13 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
+class UserOut(UserBase):
+    id: UUID
+    role: str
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
 
 class Token(BaseModel):
     access_token: str

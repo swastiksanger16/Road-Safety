@@ -24,9 +24,19 @@ def register_user(session: Session, user_data: UserCreate):
     return {"access_token": token, "token_type": "bearer"}
 
 def authenticate_user(session: Session, form_data: OAuth2PasswordRequestForm):
+    print("📥 Username:", form_data.username)
+    print("📥 Password:", form_data.password)
+
     user = session.exec(select(Users).where(Users.email == form_data.username)).first()
+    if not user:
+        print("❌ No user found with this email")
+    else:
+        print("✅ User found:", user.email)
+
     if not user or not verify_password(form_data.password, user.password_hash):
+        print("❌ Invalid password")
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     token = create_access_token(data={"sub": str(user.id)})
     return {"access_token": token, "token_type": "bearer"}
+
