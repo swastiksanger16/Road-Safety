@@ -4,7 +4,8 @@ import { Mail, Lock, Eye, EyeOff, MapPin } from 'lucide-react';
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-
+  // const API_URL = import.meta.env.VITE_API_URL;
+  // console.log("Loaded API URL:", API_URL);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
@@ -21,7 +22,7 @@ const LoginPage: React.FC = () => {
       body.append('username', formData.email); // OAuth2 expects 'username'
       body.append('password', formData.password);
 
-      const response = await fetch('http://localhost:8000/api/auth/login', {
+      const response = await fetch(`http://localhost:8000/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -34,12 +35,10 @@ const LoginPage: React.FC = () => {
       }
 
       const data = await response.json();
-      console.log('Token:', data.access_token);
-
-      alert('Login successful!');
-      // Save token or navigate if needed
-      // localStorage.setItem('token', data.access_token);
-      // navigate('/dashboard');
+      console.log("Login response:", data);
+      localStorage.setItem('access_token', data.access_token);
+      navigate('/overview');
+      
     } catch (error) {
       console.error(error);
       alert('Invalid email or password');
@@ -127,7 +126,7 @@ const LoginPage: React.FC = () => {
               </div>
 
               {/* Remember Me & Forgot Password */}
-              <div className="flex items-center justify-between">
+              {/* <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <input
                     id="remember-me"
@@ -145,7 +144,7 @@ const LoginPage: React.FC = () => {
                 >
                   Forgot password?
                 </button>
-              </div>
+              </div> */}
 
               {/* Submit Button */}
               <button

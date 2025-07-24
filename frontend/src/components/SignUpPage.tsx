@@ -10,6 +10,7 @@ type FormData = {
 };
 
 const SignUpPage: React.FC = () => {
+  // const API_URL = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -39,14 +40,9 @@ const SignUpPage: React.FC = () => {
 
     setIsLoading(true);
 
-    // // Simulate API call
-    // setTimeout(() => {
-    //   setIsLoading(false);
-    //   alert('Account created successfully! (Demo)');
-    //   navigate('/login');
-    // }, 1500);
+    
     try {
-    const response = await fetch('http://localhost:8000/api/auth/signup', {
+    const response = await fetch(`http://localhost:8000/api/auth/signup`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -64,10 +60,13 @@ const SignUpPage: React.FC = () => {
     }
 
     const data = await response.json();
-    console.log('Signup successful:', data);
-
-    alert('Account created successfully!');
-    navigate('/login');
+    if (data.access_token) {
+      localStorage.setItem('access_token', data.access_token);
+      navigate('/overview'); // redirect to protected route
+    } else {
+      alert('Signup successful, but no token received.');
+      navigate('/login');
+    }
   } catch (error: any) {
     alert(`Signup error: ${error.message}`);
   } finally {

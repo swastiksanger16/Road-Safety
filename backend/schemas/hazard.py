@@ -9,7 +9,7 @@ class HazardBase(BaseModel):
     lng: float
     hazard_type: str
     description: Optional[str] = None
-    photo_url: Optional[str] = None
+    photo_url: str = None
     status: Optional[str] = "unresolved"
     source: Optional[str] = "user"
 
