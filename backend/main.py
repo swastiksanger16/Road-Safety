@@ -9,7 +9,7 @@ from api.files import router as files_router
 app = FastAPI()
 
 origins = [
-    "http://localhost:5173",  # Frontend
+    "http://localhost:5173", 
 ]
 
 app.add_middleware(
@@ -20,7 +20,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Routers
+
 app.include_router(auth_router, prefix="/api/auth", tags=["Auth"])
 app.include_router(user_router, prefix="/api/users", tags=["Users"])
 app.include_router(hazard_router, prefix="/api/hazards", tags=["Hazards"])
