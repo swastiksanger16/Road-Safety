@@ -9,7 +9,7 @@ from api.files import router as files_router
 app = FastAPI()
 
 origins = [
-    "http://localhost:5173",  # Frontend
+    "http://localhost:5173", 
 ]
 
 app.add_middleware(
