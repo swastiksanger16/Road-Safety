@@ -69,11 +69,11 @@ if (userData) {
             {isLoggedIn ? (
               <>
                 <button
-                  onClick={() => navigate('/profile')}
-                  className="px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 hover:bg-gray-50 rounded-lg"
-                >
-                  Welcome, {userName || 'User'}
-                </button>
+  onClick={() => navigate(currentPage === '/profile' ? '/overview' : '/profile')}
+  className="px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 hover:bg-gray-50 rounded-lg"
+>
+  {currentPage === '/profile' ? 'View Feed' : `Welcome, ${userName || 'User'}`}
+</button>
                 <button
                   onClick={handleLogout}
                   className="px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
@@ -120,14 +120,15 @@ if (userData) {
             {isLoggedIn ? (
               <>
                 <button
-                  onClick={() => {
-                    navigate('/profile');
-                    setMenuOpen(false);
-                  }}
-                  className="block px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 hover:bg-gray-50 rounded-lg"
-                >
-                  Welcome, {userName || 'User'}
-                </button>
+  onClick={() => {
+    navigate(currentPage === '/profile' ? '/overview' : '/profile');
+    setMenuOpen(false);
+  }}
+  className="block px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 hover:bg-gray-50 rounded-lg"
+>
+  {currentPage === '/profile' ? 'View Feed' : `Welcome, ${userName || 'User'}`}
+</button>
+
                 <button
                   onClick={() => {
                     handleLogout();
