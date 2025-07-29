@@ -9,8 +9,19 @@ type FormData = {
   confirmPassword: string;
 };
 
+interface TokenWithUser {
+  access_token: string;
+  token_type: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    created_at: string;
+  };
+}
+
 const SignUpPage: React.FC = () => {
-  // const API_URL = import.meta.env.VITE_API_URL;
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -40,39 +51,41 @@ const SignUpPage: React.FC = () => {
 
     setIsLoading(true);
 
-    
     try {
-    const response = await fetch(`http://localhost:8000/api/auth/signup`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        name: formData.fullName,
-        email: formData.email,
-        password: formData.password,
-      }),
-    });
+      const response = await fetch(`http://localhost:8000/api/auth/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.fullName,
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.detail || 'Signup failed');
-    }
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Signup failed');
+      }
 
-    const data = await response.json();
-    if (data.access_token) {
-      localStorage.setItem('access_token', data.access_token);
-      navigate('/overview'); // redirect to protected route
-    } else {
-      alert('Signup successful, but no token received.');
-      navigate('/login');
+      const data: TokenWithUser = await response.json();
+      console.log('Signup response:', data);
+
+      if (data.access_token) {
+        localStorage.setItem('access_token', data.access_token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        navigate('/overview'); // Redirect to protected route
+      } else {
+        alert('Signup successful, but no token received.');
+        navigate('/login');
+      }
+    } catch (error: any) {
+      alert(`Signup error: ${error.message}`);
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error: any) {
-    alert(`Signup error: ${error.message}`);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-orange-50 pt-16">
