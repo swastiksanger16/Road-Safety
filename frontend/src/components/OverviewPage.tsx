@@ -25,6 +25,46 @@ const OverviewPage = () => {
     }
   }, []);
 
+  useEffect(() => {
+  const sendLocationToBackend = async () => {
+    if (!userLocation) return;
+
+    const token = localStorage.getItem("access_token");
+    const user = localStorage.getItem("user");
+
+    if (!token || !user) return;
+
+    const userId = JSON.parse(user).id;
+
+    try {
+      const response = await fetch("http://localhost:8000/api/location/update", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          lat: userLocation.lat,
+          lng: userLocation.lng
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update location");
+      }
+
+      console.log("User location updated successfully");
+    } catch (error) {
+      console.error("Error updating location:", error);
+    }
+  };
+
+  sendLocationToBackend();
+}, [userLocation]);
+
+
+
   const handleReportHazard = () => {
     setShowHazardForm(true);
   };
