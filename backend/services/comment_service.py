@@ -4,6 +4,7 @@ from fastapi import HTTPException
 from models.comment import Comment
 from schemas.comment import CommentCreate
 from typing import List
+from sqlalchemy.orm import selectinload
 
 
 def create_comment(session: Session, user_id: UUID, comment_data: CommentCreate) -> Comment:
@@ -18,9 +19,11 @@ def create_comment(session: Session, user_id: UUID, comment_data: CommentCreate)
     return new_comment
 
 
-def get_comments_by_report(session: Session, report_id: int) -> List[Comment]:
-    comments = session.exec(
-        select(Comment).where(Comment.report_id == report_id)
-    ).all()
-    
-    return comments
+def get_comments_by_report(session: Session, report_id: int):
+    statement = (
+        select(Comment)
+        .where(Comment.report_id == report_id)
+        .options(selectinload(Comment.user))  
+        .order_by(Comment.created_at.desc())
+    )
+    return session.exec(statement).all()

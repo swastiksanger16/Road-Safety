@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from uuid import UUID
 from datetime import datetime
 from typing import Optional
@@ -13,8 +13,10 @@ class HazardBase(BaseModel):
     status: Optional[str] = "unresolved"
     source: Optional[str] = "user"
 
+
 class HazardCreate(HazardBase):
     pass
+
 
 class HazardRead(HazardBase):
     id: int
@@ -24,3 +26,9 @@ class HazardRead(HazardBase):
 
     class Config:
         orm_mode = True
+
+
+# class HazardWithVotes(HazardRead):
+#     upvotes: int
+#     downvotes: int
+#     user_vote: Optional[str] = None

@@ -1,7 +1,10 @@
-from sqlmodel import SQLModel, Field
+from sqlmodel import SQLModel, Field, Relationship
 from uuid import UUID, uuid4
 from datetime import datetime
+from typing import List, TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from models.comment import Comment
 
 class Users(SQLModel, table=True):
     __tablename__ = "users"
@@ -13,3 +16,5 @@ class Users(SQLModel, table=True):
     role: str = Field(default="user", max_length=50)
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
+
+    comments: List["Comment"] = Relationship(back_populates="user")
