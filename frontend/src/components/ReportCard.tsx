@@ -1,5 +1,12 @@
 import React from 'react';
-import { MapPin, ThumbsUp, ThumbsDown, Clock, AlertTriangle, MessageCircle } from 'lucide-react';
+import {
+  MapPin,
+  ThumbsUp,
+  ThumbsDown,
+  Clock,
+  AlertTriangle,
+  MessageCircle
+} from 'lucide-react';
 
 interface Report {
   id: string;
@@ -7,7 +14,7 @@ interface Report {
   description: string;
   location: { lat: number; lng: number };
   distance: number;
-  timestamp: string; // changed from Date to string for API compatibility
+  timestamp: string; // ISO string
   upvotes: number;
   downvotes: number;
   userVote: 'up' | 'down' | null;
@@ -16,9 +23,10 @@ interface Report {
 interface ReportCardProps {
   report: Report;
   onVote: (reportId: string, voteType: 'up' | 'down') => void;
+  timeAgo?: string; 
 }
 
-const ReportCard: React.FC<ReportCardProps> = ({ report, onVote }) => {
+const ReportCard: React.FC<ReportCardProps> = ({ report, onVote, timeAgo }) => {
   const getHazardType = (description: string) => {
     const text = description.toLowerCase();
     if (text.includes('pothole')) return { type: 'Pothole', color: 'text-orange-600', bg: 'bg-orange-100' };
@@ -28,27 +36,14 @@ const ReportCard: React.FC<ReportCardProps> = ({ report, onVote }) => {
     return { type: 'Hazard', color: 'text-purple-600', bg: 'bg-purple-100' };
   };
 
-  // Calculate time ago
-  const getTimeAgo = (timestamp: string): string => {
-    const now = new Date();
-    const past = new Date(timestamp);
-    const diff = Math.floor((now.getTime() - past.getTime()) / 1000); // seconds difference
-
-    if (diff < 60) return `${diff} sec ago`;
-    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)} hr ago`;
-    return `${Math.floor(diff / 86400)} day(s) ago`;
-  };
-
   const hazardInfo = getHazardType(report.description);
-  const timeAgo = getTimeAgo(report.timestamp);
 
   return (
     <div className="bg-white/80 backdrop-blur-lg rounded-3xl shadow-lg border border-white/50 overflow-hidden hover:shadow-xl transition-all duration-300 group">
       {/* Image */}
       <div className="relative overflow-hidden">
         <img
-          src={report.image || '/placeholder.png'} // fallback image
+          src={report.image || '/placeholder.png'}
           alt="Hazard report"
           className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
         />
@@ -76,7 +71,7 @@ const ReportCard: React.FC<ReportCardProps> = ({ report, onVote }) => {
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-1">
               <Clock className="w-4 h-4" />
-              <span>{timeAgo}</span>
+              <span>{timeAgo || 'Just now'}</span>
             </div>
             <div className="flex items-center space-x-1">
               <MapPin className="w-4 h-4" />

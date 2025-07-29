@@ -2,10 +2,20 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, MapPin } from 'lucide-react';
 
+interface TokenWithUser {
+  access_token: string;
+  token_type: string;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    created_at: string;
+  };
+}
+
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  // const API_URL = import.meta.env.VITE_API_URL;
-  // console.log("Loaded API URL:", API_URL);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
@@ -34,11 +44,14 @@ const LoginPage: React.FC = () => {
         throw new Error('Login failed');
       }
 
-      const data = await response.json();
+      const data: TokenWithUser = await response.json();
       console.log("Login response:", data);
+
+      // Save token and user details
       localStorage.setItem('access_token', data.access_token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+
       navigate('/overview');
-      
     } catch (error) {
       console.error(error);
       alert('Invalid email or password');
@@ -124,27 +137,6 @@ const LoginPage: React.FC = () => {
                   </button>
                 </div>
               </div>
-
-              {/* Remember Me & Forgot Password */}
-              {/* <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <input
-                    id="remember-me"
-                    name="remember-me"
-                    type="checkbox"
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-                    Remember me
-                  </label>
-                </div>
-                <button
-                  type="button"
-                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  Forgot password?
-                </button>
-              </div> */}
 
               {/* Submit Button */}
               <button

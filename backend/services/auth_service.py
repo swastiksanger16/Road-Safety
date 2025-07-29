@@ -10,33 +10,61 @@ def register_user(session: Session, user_data: UserCreate):
     if existing:
         raise HTTPException(status_code=400, detail="Email already exists")
 
+    
     hashed = get_password_hash(user_data.password)
     user = Users(
         name=user_data.name,
         email=user_data.email,
         password_hash=hashed
     )
+
+    
     session.add(user)
     session.commit()
     session.refresh(user)
 
+    
     token = create_access_token(data={"sub": str(user.id)})
-    return {"access_token": token, "token_type": "bearer"}
+
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "role": user.role,
+            "created_at": user.created_at
+        }
+    }
 
 def authenticate_user(session: Session, form_data: OAuth2PasswordRequestForm):
-    print("📥 Username:", form_data.username)
-    print("📥 Password:", form_data.password)
+    print("Username:", form_data.username)
+    print("Password:", form_data.password)
 
+    
     user = session.exec(select(Users).where(Users.email == form_data.username)).first()
     if not user:
-        print("❌ No user found with this email")
+        print("No user found with this email")
     else:
-        print("✅ User found:", user.email)
+        print("User found:", user.email)
 
+    
     if not user or not verify_password(form_data.password, user.password_hash):
-        print("❌ Invalid password")
+        print("Invalid password")
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
+    
     token = create_access_token(data={"sub": str(user.id)})
-    return {"access_token": token, "token_type": "bearer"}
 
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "role": user.role,
+            "created_at": user.created_at
+        }
+    }

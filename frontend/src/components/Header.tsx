@@ -10,20 +10,33 @@ const Header: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [userName, setUserName] = useState<string>('');
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
     window.addEventListener('scroll', handleScroll);
 
     const token = localStorage.getItem('access_token');
-    setIsLoggedIn(!!token); // check if token exists
+    const userData = localStorage.getItem('user');
+if (userData) {
+  try {
+    const parsedUser = JSON.parse(userData);
+    setUserName(parsedUser.name || '');
+  } catch {
+    setUserName('');
+  }
+}
+    setIsLoggedIn(!!token);
+    // setUserName(storedName || '');
 
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [location]); // re-check token on route change
+  }, [location]);
 
   const handleLogout = () => {
     localStorage.removeItem('access_token');
+    localStorage.removeItem('user');
     setIsLoggedIn(false);
+    setUserName('');
     navigate('/');
   };
 
@@ -55,12 +68,12 @@ const Header: React.FC = () => {
           <div className="hidden sm:flex items-center space-x-3">
             {isLoggedIn ? (
               <>
-                <Link
-                  to="/overview"
+                <button
+                  onClick={() => navigate('/profile')}
                   className="px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 hover:bg-gray-50 rounded-lg"
                 >
-                  Overview
-                </Link>
+                  Welcome, {userName || 'User'}
+                </button>
                 <button
                   onClick={handleLogout}
                   className="px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
@@ -106,13 +119,15 @@ const Header: React.FC = () => {
           <div className="sm:hidden mt-2 space-y-2 pb-4">
             {isLoggedIn ? (
               <>
-                <Link
-                  to="/overview"
+                <button
+                  onClick={() => {
+                    navigate('/profile');
+                    setMenuOpen(false);
+                  }}
                   className="block px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 hover:bg-gray-50 rounded-lg"
-                  onClick={() => setMenuOpen(false)}
                 >
-                  Overview
-                </Link>
+                  Welcome, {userName || 'User'}
+                </button>
                 <button
                   onClick={() => {
                     handleLogout();

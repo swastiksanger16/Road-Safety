@@ -8,89 +8,64 @@ interface Report {
   description: string;
   location: { lat: number; lng: number };
   distance: number;
-  timestamp: Date;
+  timestamp: string; // ISO string from API
   upvotes: number;
   downvotes: number;
   userVote: 'up' | 'down' | null;
 }
 
 interface FeedProps {
-  userLocation: {lat: number, lng: number} | null;
+  userLocation: { lat: number; lng: number } | null;
 }
 
 const Feed: React.FC<FeedProps> = ({ userLocation }) => {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(false);
-  const [filter, setFilter] = useState<'all' | 'recent' | 'nearby'>('all');
+  const [filter, setFilter] = useState<'all' | 'recent'>('all');
 
-  // Mock data for demonstration
-  const mockReports: Report[] = [
-    {
-      id: '1',
-      image: 'https://images.pexels.com/photos/161799/pothole-road-damage-asphalt-161799.jpeg?auto=compress&cs=tinysrgb&w=800',
-      description: 'Large pothole on Main Street causing traffic issues. Multiple vehicles have been damaged.',
-      location: { lat: 40.7128, lng: -74.0060 },
-      distance: 0.5,
-      timestamp: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
-      upvotes: 15,
-      downvotes: 2,
-      userVote: null
-    },
-    {
-      id: '2',
-      image: 'https://images.pexels.com/photos/417054/pexels-photo-417054.jpeg?auto=compress&cs=tinysrgb&w=800',
-      description: 'Construction debris blocking the right lane on Highway 101. Proceed with caution.',
-      location: { lat: 40.7580, lng: -73.9855 },
-      distance: 1.2,
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-      upvotes: 8,
-      downvotes: 1,
-      userVote: null
-    },
-    {
-      id: '3',
-      image: 'https://images.pexels.com/photos/163016/crash-test-collision-60-km-h-distraction-163016.jpeg?auto=compress&cs=tinysrgb&w=800',
-      description: 'Minor accident at Oak Avenue intersection. Traffic is moving slowly but emergency services have cleared the scene.',
-      location: { lat: 40.7308, lng: -73.9728 },
-      distance: 0.8,
-      timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000), // 4 hours ago
-      upvotes: 12,
-      downvotes: 0,
-      userVote: null
-    },
-    {
-      id: '4',
-      image: 'https://images.pexels.com/photos/280209/pexels-photo-280209.jpeg?auto=compress&cs=tinysrgb&w=800',
-      description: 'Flooding on River Road after heavy rain. Water level is about 6 inches deep, avoid if possible.',
-      location: { lat: 40.7489, lng: -73.9680 },
-      distance: 1.8,
-      timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 hours ago
-      upvotes: 20,
-      downvotes: 3,
-      userVote: null
+  // Fetch reports from backend
+  const fetchReports = async () => {
+    if (!userLocation) return;
+
+    try {
+      setLoading(true);
+      const response = await fetch(
+        `http://localhost:8000/api/hazards/nearby?lat=${userLocation.lat}&lng=${userLocation.lng}`
+      );
+      const data = await response.json();
+
+      const formattedReports = data.map((hazard: any) => ({
+        id: hazard.id.toString(),
+        image: hazard.photo_url,
+        description: hazard.description,
+        location: { lat: hazard.lat, lng: hazard.lng },
+        distance: hazard.distance ?? 0,
+        timestamp: hazard.created_at, // Keep as string
+        upvotes: hazard.upvotes ?? 0,
+        downvotes: hazard.downvotes ?? 0,
+        userVote: null
+      }));
+
+      setReports(formattedReports);
+    } catch (error) {
+      console.error('Error fetching reports:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   useEffect(() => {
-    // Simulate loading reports
-    setLoading(true);
-    setTimeout(() => {
-      setReports(mockReports);
-      setLoading(false);
-    }, 1000);
-  }, []);
+    fetchReports();
+  }, [userLocation]);
 
   const handleVote = (reportId: string, voteType: 'up' | 'down') => {
     setReports(prevReports =>
       prevReports.map(report => {
         if (report.id === reportId) {
           const newReport = { ...report };
-          
-          // Remove previous vote if any
           if (report.userVote === 'up') newReport.upvotes--;
           if (report.userVote === 'down') newReport.downvotes--;
-          
-          // Add new vote if different from current
+
           if (report.userVote !== voteType) {
             if (voteType === 'up') newReport.upvotes++;
             if (voteType === 'down') newReport.downvotes++;
@@ -98,7 +73,6 @@ const Feed: React.FC<FeedProps> = ({ userLocation }) => {
           } else {
             newReport.userVote = null;
           }
-          
           return newReport;
         }
         return report;
@@ -107,31 +81,43 @@ const Feed: React.FC<FeedProps> = ({ userLocation }) => {
   };
 
   const filteredReports = reports.filter(report => {
+    const reportDate = new Date(report.timestamp);
     switch (filter) {
       case 'recent':
-        return Date.now() - report.timestamp.getTime() < 24 * 60 * 60 * 1000; // Last 24 hours
-      case 'nearby':
-        return report.distance <= 1; // Within 1km
+        return Date.now() - reportDate.getTime() < 2 * 24 * 60 * 60 * 1000;
+      // case 'nearby':
+      //   return report.distance <= 1;
+      case 'all':
       default:
-        return report.distance <= 2; // Within 2km (as per requirement)
+        return report.distance <= 2;
     }
   });
 
-  const getTimeAgo = (date: Date) => {
-    const now = new Date();
-    const diffInMs = now.getTime() - date.getTime();
-    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-    const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+  const getTimeAgo = (dateString: string) => {
+  const utcDate = new Date(dateString);
 
-    if (diffInHours >= 24) {
-      const days = Math.floor(diffInHours / 24);
-      return `${days} day${days > 1 ? 's' : ''} ago`;
-    } else if (diffInHours >= 1) {
-      return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
-    } else {
-      return `${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`;
-    }
-  };
+  // Convert UTC to local time by creating a new Date object
+  const localDate = new Date(utcDate.getTime() + new Date().getTimezoneOffset() * -60000);
+  const now = new Date();
+
+  const diffInMs = now.getTime() - localDate.getTime();
+  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+
+  if (diffInMinutes < 1) {
+    return 'just now';
+  } else if (diffInMinutes < 60) {
+    return `${diffInMinutes} minute${diffInMinutes === 1 ? '' : 's'} ago`;
+  }
+
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) {
+    return `${diffInHours} hour${diffInHours === 1 ? '' : 's'} ago`;
+  }
+
+  const diffInDays = Math.floor(diffInHours / 24);
+  return `${diffInDays} day${diffInDays === 1 ? '' : 's'} ago`;
+};
+
 
   return (
     <div className="space-y-6">
@@ -144,15 +130,16 @@ const Feed: React.FC<FeedProps> = ({ userLocation }) => {
             </div>
             <div>
               <h2 className="text-2xl font-bold text-gray-800">Community Reports</h2>
-              <p className="text-gray-600">Hazards reported within 2km of your location</p>
+              <p className="text-gray-600">
+  {filter === 'recent'
+    ? 'Recent hazards reported in the last 2 days (within 2km)'
+    : 'All hazards reported within 2km of your location'}
+</p>
             </div>
           </div>
-          
+
           <button
-            onClick={() => {
-              setLoading(true);
-              setTimeout(() => setLoading(false), 1000);
-            }}
+            onClick={fetchReports}
             className="p-3 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors"
           >
             <RefreshCw className={`w-5 h-5 text-gray-600 ${loading ? 'animate-spin' : ''}`} />
@@ -163,8 +150,8 @@ const Feed: React.FC<FeedProps> = ({ userLocation }) => {
         <div className="flex space-x-1 bg-gray-100 rounded-2xl p-1">
           {[
             { key: 'all', label: 'All Reports', icon: MapPin },
-            { key: 'recent', label: 'Recent', icon: Clock },
-            { key: 'nearby', label: 'Nearby', icon: Users }
+            { key: 'recent', label: 'Recent', icon: Clock }
+            // { key: 'nearby', label: 'Nearby', icon: Users }
           ].map(({ key, label, icon: Icon }) => (
             <button
               key={key}

@@ -5,6 +5,9 @@ import LandingPage from './components/LandingPage';
 import LoginPage from './components/LoginPage';
 import SignUpPage from './components/SignUpPage';
 import OverviewPage from './components/OverviewPage';
+import Profile from './components/Profile';
+import Feed from './components/Feed'; // If you want feed as a separate page
+
 // Private route wrapper
 const ProtectedRoutes: React.FC = () => {
   const isAuthenticated = !!localStorage.getItem('access_token');
@@ -27,8 +30,11 @@ const App: React.FC = () => {
             {/* Protected Routes Group */}
             <Route element={<ProtectedRoutes />}>
               <Route path="/overview" element={<OverviewPage />} />
-              {/* <Route path="/report" element={<ReportCard />} />
-              <Route path="/feed" element={<Feed />} /> */}
+              <Route path="/profile" element={<Profile />} />
+              <Route
+                path="/feed"
+                element={<Feed userLocation={null} />} // Pass location if needed
+              />
             </Route>
 
             {/* Catch-all Route */}

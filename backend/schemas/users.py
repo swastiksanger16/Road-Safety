@@ -29,6 +29,7 @@ class UserOut(UserBase):
     id: UUID
     role: str
     created_at: datetime
+    email: EmailStr
 
     class Config:
         orm_mode = True
@@ -36,3 +37,6 @@ class UserOut(UserBase):
 class Token(BaseModel):
     access_token: str
     token_type: str
+    
+class TokenWithUser(Token):
+    user: UserOut
