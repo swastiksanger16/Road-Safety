@@ -13,6 +13,7 @@ interface Report {
   upvotes: number;
   downvotes: number;
   userVote: 'up' | 'down' | null;
+  status: string;
 }
 
 interface FeedProps {
@@ -82,6 +83,7 @@ const Feed: React.FC<FeedProps> = ({ userLocation }) => {
           upvotes: hazard.upvotes ?? 0,
           downvotes: hazard.downvotes ?? 0,
           userVote: null,
+          status: hazard.status ?? 'Unresolved',
         };
       });
 

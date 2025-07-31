@@ -11,6 +11,7 @@ const Header: React.FC = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [userName, setUserName] = useState<string>('');
+  const [userRole, setUserRole] = useState<string>('user');
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);
@@ -18,17 +19,19 @@ const Header: React.FC = () => {
 
     const token = localStorage.getItem('access_token');
     const userData = localStorage.getItem('user');
-if (userData) {
-  try {
-    const parsedUser = JSON.parse(userData);
-    setUserName(parsedUser.name || '');
-  } catch {
-    setUserName('');
-  }
-}
-    setIsLoggedIn(!!token);
-    // setUserName(storedName || '');
 
+    if (userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        setUserName(parsedUser.name || '');
+        setUserRole(parsedUser.role || 'user');
+      } catch {
+        setUserName('');
+        setUserRole('user');
+      }
+    }
+
+    setIsLoggedIn(!!token);
     return () => window.removeEventListener('scroll', handleScroll);
   }, [location]);
 
@@ -37,6 +40,7 @@ if (userData) {
     localStorage.removeItem('user');
     setIsLoggedIn(false);
     setUserName('');
+    setUserRole('user');
     navigate('/');
   };
 
@@ -68,12 +72,28 @@ if (userData) {
           <div className="hidden sm:flex items-center space-x-3">
             {isLoggedIn ? (
               <>
-                <button
-  onClick={() => navigate(currentPage === '/profile' ? '/overview' : '/profile')}
-  className="px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 hover:bg-gray-50 rounded-lg"
->
-  {currentPage === '/profile' ? 'View Feed' : `Welcome, ${userName || 'User'}`}
-</button>
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={() =>
+                      navigate(currentPage === '/profile' ? '/overview' : '/profile')
+                    }
+                    className="px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 hover:bg-gray-50 rounded-lg"
+                  >
+                    {currentPage === '/profile'
+                      ? 'View Feed'
+                      : `Welcome, ${userRole === 'admin' ? 'Admin ' : ''}${userName || 'User'}`}
+                  </button>
+
+                  {userRole === 'admin' && (
+                    <button
+                      onClick={() => navigate('/admin')}
+                      className="px-4 py-2 bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-700 transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
+                    >
+                      Admin Panel
+                    </button>
+                  )}
+                </div>
+
                 <button
                   onClick={handleLogout}
                   className="px-6 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-all duration-200 transform hover:scale-105 shadow-md hover:shadow-lg"
@@ -120,14 +140,28 @@ if (userData) {
             {isLoggedIn ? (
               <>
                 <button
-  onClick={() => {
-    navigate(currentPage === '/profile' ? '/overview' : '/profile');
-    setMenuOpen(false);
-  }}
-  className="block px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 hover:bg-gray-50 rounded-lg"
->
-  {currentPage === '/profile' ? 'View Feed' : `Welcome, ${userName || 'User'}`}
-</button>
+                  onClick={() => {
+                    navigate(currentPage === '/profile' ? '/overview' : '/profile');
+                    setMenuOpen(false);
+                  }}
+                  className="block px-4 py-2 text-gray-700 hover:text-blue-600 font-medium transition-colors duration-200 hover:bg-gray-50 rounded-lg"
+                >
+                  {currentPage === '/profile'
+                    ? 'View Feed'
+                    : `Welcome, ${userRole === 'admin' ? 'Admin ' : ''}${userName || 'User'}`}
+                </button>
+
+                {userRole === 'admin' && (
+                  <button
+                    onClick={() => {
+                      navigate('/admin');
+                      setMenuOpen(false);
+                    }}
+                    className="block px-4 py-2 bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-700 transition-all duration-200 mx-4"
+                  >
+                    Admin Panel
+                  </button>
+                )}
 
                 <button
                   onClick={() => {
