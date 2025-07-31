@@ -6,7 +6,9 @@ import {
   ThumbsDown,
   Clock,
   AlertTriangle,
-  MessageCircle
+  MessageCircle,
+  Trash,
+  Pencil
 } from 'lucide-react';
 
 interface Report {
@@ -14,21 +16,33 @@ interface Report {
   image?: string;
   description: string;
   location: { lat: number; lng: number };
-  distance: number;
+  distance?: number; // made optional
   timestamp: string;
   upvotes: number;
   downvotes: number;
-  userVote: 'up' | 'down' | null;
+  userVote?: 'up' | 'down' | null; // made optional
+  status?: string;
 }
 
 interface ReportCardProps {
   report: Report;
-  onVote: (reportId: string, voteType: 'up' | 'down') => void;
+  onVote?: (reportId: string, voteType: 'up' | 'down') => void;
+  onDelete?: (reportId: string) => void;
+  onUpdateStatus?: (reportId: string) => void;
+  isAdmin?: boolean;
   timeAgo?: string;
 }
 
-const ReportCard: React.FC<ReportCardProps> = ({ report, onVote, timeAgo }) => {
+const ReportCard: React.FC<ReportCardProps> = ({
+  report,
+  onVote,
+  onDelete,
+  onUpdateStatus,
+  isAdmin = false,
+  timeAgo
+}) => {
   const [showComments, setShowComments] = useState(false);
+
   const getHazardType = (description: string) => {
     const text = description.toLowerCase();
     if (text.includes('pothole')) return { type: 'Pothole', color: 'text-orange-600', bg: 'bg-orange-100' };
@@ -39,8 +53,6 @@ const ReportCard: React.FC<ReportCardProps> = ({ report, onVote, timeAgo }) => {
   };
 
   const hazardInfo = getHazardType(report.description);
-
-  // Convert string ID to number safely
   const reportIdNumber = parseInt(report.id, 10);
 
   return (
@@ -55,10 +67,25 @@ const ReportCard: React.FC<ReportCardProps> = ({ report, onVote, timeAgo }) => {
           <AlertTriangle className="w-3 h-3" />
           <span>{hazardInfo.type}</span>
         </div>
-        <div className="absolute top-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-1 backdrop-blur-sm">
-          <MapPin className="w-3 h-3" />
-          <span>{report.distance.toFixed(1)} km away</span>
-        </div>
+        {report.distance !== undefined && (
+          <div className="absolute top-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-1 backdrop-blur-sm">
+            <MapPin className="w-3 h-3" />
+            <span>{report.distance.toFixed(1)} km away</span>
+          </div>
+        )}
+        {report.status && (
+  <div
+    className={`absolute bottom-4 left-4 px-3 py-1 rounded-full text-sm font-semibold backdrop-blur-sm shadow-md
+      ${report.status.toLowerCase() === 'resolved' 
+        ? 'bg-green-100 text-green-700' 
+        : report.status.toLowerCase() === 'in progress' 
+        ? 'bg-yellow-100 text-yellow-700' 
+        : 'bg-red-100 text-red-700'}`}
+  >
+    {report.status}
+  </div>
+)}
+
       </div>
 
       <div className="p-6 space-y-4">
@@ -78,31 +105,50 @@ const ReportCard: React.FC<ReportCardProps> = ({ report, onVote, timeAgo }) => {
         </div>
 
         <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => onVote(report.id, 'up')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-xl font-medium transition-all ${
-                report.userVote === 'up'
-                  ? 'bg-green-100 text-green-700 shadow-sm'
-                  : 'hover:bg-green-50 text-gray-600 hover:text-green-600'
-              }`}
-            >
-              <ThumbsUp className="w-4 h-4" />
-              <span>{report.upvotes}</span>
-            </button>
+          {isAdmin ? (
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => onUpdateStatus?.(report.id)}
+                className="flex items-center space-x-2 px-4 py-2 rounded-xl text-blue-700 bg-blue-100 hover:bg-blue-200 transition-all font-medium"
+              >
+                <Pencil className="w-4 h-4" />
+                <span>Update Status</span>
+              </button>
+              <button
+                onClick={() => onDelete?.(report.id)}
+                className="flex items-center space-x-2 px-4 py-2 rounded-xl text-red-700 bg-red-100 hover:bg-red-200 transition-all font-medium"
+              >
+                <Trash className="w-4 h-4" />
+                <span>Delete</span>
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center space-x-4">
+              <button
+                onClick={() => onVote?.(report.id, 'up')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl font-medium transition-all ${
+                  report.userVote === 'up'
+                    ? 'bg-green-100 text-green-700 shadow-sm'
+                    : 'hover:bg-green-50 text-gray-600 hover:text-green-600'
+                }`}
+              >
+                <ThumbsUp className="w-4 h-4" />
+                <span>{report.upvotes}</span>
+              </button>
 
-            <button
-              onClick={() => onVote(report.id, 'down')}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-xl font-medium transition-all ${
-                report.userVote === 'down'
-                  ? 'bg-red-100 text-red-700 shadow-sm'
-                  : 'hover:bg-red-50 text-gray-600 hover:text-red-600'
-              }`}
-            >
-              <ThumbsDown className="w-4 h-4" />
-              <span>{report.downvotes}</span>
-            </button>
-          </div>
+              <button
+                onClick={() => onVote?.(report.id, 'down')}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-xl font-medium transition-all ${
+                  report.userVote === 'down'
+                    ? 'bg-red-100 text-red-700 shadow-sm'
+                    : 'hover:bg-red-50 text-gray-600 hover:text-red-600'
+                }`}
+              >
+                <ThumbsDown className="w-4 h-4" />
+                <span>{report.downvotes}</span>
+              </button>
+            </div>
+          )}
 
           <button
             onClick={() => setShowComments(!showComments)}

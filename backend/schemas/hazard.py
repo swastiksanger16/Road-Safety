@@ -27,6 +27,8 @@ class HazardRead(HazardBase):
     class Config:
         orm_mode = True
 
+class HazardStatusUpdate(BaseModel):
+    status: str
 
 # class HazardWithVotes(HazardRead):
 #     upvotes: int

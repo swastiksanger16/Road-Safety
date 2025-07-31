@@ -1,19 +1,19 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Form
+from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, Path
 from sqlmodel import Session, select
 from typing import List
 
 from db.session import get_session
 from services.hazard_service import create_hazard
 from services.location_service import upsert_user_location, get_users_near_location, haversine_distance
-from core.deps import get_current_user
+from core.deps import get_current_user, get_current_admin
 from core.s3_service import upload_to_s3, get_presigned_url
 from models.hazard import Hazard
 from models.users import Users
-from schemas.hazard import HazardRead
+from schemas.hazard import HazardRead, HazardStatusUpdate
 from schemas.location import UserCurrentLocationUpdate
-from sqlalchemy import desc
 
 router = APIRouter()
+
 
 @router.post("/", response_model=HazardRead)
 def report_hazard(
@@ -51,6 +51,7 @@ def report_hazard(
 
     return hazard
 
+
 @router.get("/", response_model=List[HazardRead])
 def get_hazards(session: Session = Depends(get_session)):
     hazards = session.exec(select(Hazard)).all()
@@ -58,11 +59,12 @@ def get_hazards(session: Session = Depends(get_session)):
         hazard.photo_url = get_presigned_url(hazard.photo_url)
     return hazards
 
+
 @router.get("/nearby", response_model=List[HazardRead])
 def get_nearby_hazards(
     lat: float,
     lng: float,
-    radius_km: float = 3,
+    radius_km: float = 8,
     session: Session = Depends(get_session),
     current_user: Users = Depends(get_current_user)
 ):
@@ -76,6 +78,7 @@ def get_nearby_hazards(
             nearby_hazards.append(hazard)
 
     return nearby_hazards
+
 
 @router.get("/mine", response_model=List[HazardRead])
 def get_my_hazards(
@@ -92,3 +95,38 @@ def get_my_hazards(
         h.photo_url = get_presigned_url(h.photo_url)
 
     return hazards
+
+
+@router.delete("/{hazard_id}")
+def delete_hazard(
+    hazard_id: str = Path(...),
+    session: Session = Depends(get_session),
+    current_admin: Users = Depends(get_current_admin)
+):
+    hazard = session.get(Hazard, hazard_id)
+    if not hazard:
+        raise HTTPException(status_code=404, detail="Hazard not found")
+
+    session.delete(hazard)
+    session.commit()
+    return {"detail": "Hazard deleted successfully"}
+
+
+@router.patch("/{hazard_id}/status", response_model=HazardRead)
+def update_hazard_status(
+    hazard_id: str,
+    payload: HazardStatusUpdate,
+    session: Session = Depends(get_session),
+    current_admin: Users = Depends(get_current_admin)
+):
+    hazard = session.get(Hazard, hazard_id)
+    if not hazard:
+        raise HTTPException(status_code=404, detail="Hazard not found")
+
+    hazard.status = payload.status
+    session.add(hazard)
+    session.commit()
+    session.refresh(hazard)
+
+    hazard.photo_url = get_presigned_url(hazard.photo_url)
+    return hazard
