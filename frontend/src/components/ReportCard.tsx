@@ -123,7 +123,7 @@ const ReportCard: React.FC<ReportCardProps> = ({
             <div className="flex items-center space-x-1">
               <MapPin className="w-4 h-4" />
               {/* ✅ Dynamic place name */}
-              <span>{report.placeName || 'Unknown location'}</span>
+              <span>{report.placeName || 'Public Road'}</span>
             </div>
           </div>
         </div>
