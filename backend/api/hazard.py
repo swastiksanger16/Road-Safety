@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, Path, BackgroundTasks
+from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, Path, BackgroundTasks, status
 from sqlmodel import Session, select
 from typing import List
 from core.notification_service import send_hazard_email
@@ -12,6 +12,7 @@ from models.users import Users
 from schemas.hazard import HazardRead, HazardStatusUpdate
 from schemas.location import UserCurrentLocationUpdate
 import os
+from fastapi.responses import JSONResponse
 from core.ml_model import is_pothole
 
 router = APIRouter()
@@ -33,8 +34,13 @@ async def report_hazard(
 
     # ✅ ML check only for pothole type
     if hazard_type.lower() == "pothole" and not is_pothole(image_bytes):
-        raise HTTPException(status_code=400, detail="Uploaded image is not a pothole.")
-
+        return JSONResponse(
+            status_code=status.HTTP_400_BAD_REQUEST , # ✅ keep 200 so frontend doesn't treat as hard error
+            content={
+                "success": False,
+                "message": "Uploaded image is not a valid hazard. Please try again."
+            }
+        )
     # ✅ Reset file pointer so S3 can read it
     file.file.seek(0)
 
@@ -133,11 +139,24 @@ def delete_hazard(
 ):
     hazard = session.get(Hazard, hazard_id)
     if not hazard:
-        raise HTTPException(status_code=404, detail="Hazard not found")
+        return JSONResponse(
+            status_code=404,
+            content={
+                "success": False,
+                "message": "Hazard not found"
+            }
+        )
 
     session.delete(hazard)
     session.commit()
-    return {"detail": "Hazard deleted successfully"}
+
+    return JSONResponse(
+        status_code=200,
+        content={
+            "success": True,
+            "message": "Hazard deleted successfully"
+        }
+    )
 
 
 @router.patch("/{hazard_id}/status", response_model=HazardRead)

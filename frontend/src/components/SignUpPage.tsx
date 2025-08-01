@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Mail, Lock, User, Eye, EyeOff, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 type FormData = {
   fullName: string;
@@ -45,7 +46,7 @@ const SignUpPage: React.FC = () => {
     e.preventDefault();
 
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match!');
+      toast.error('Passwords do not match!');
       return;
     }
 
@@ -75,13 +76,14 @@ const SignUpPage: React.FC = () => {
       if (data.access_token) {
         localStorage.setItem('access_token', data.access_token);
         localStorage.setItem('user', JSON.stringify(data.user));
+        toast.success(`Account created! Welcome, ${data.user.name}`);
         navigate('/overview'); // Redirect to protected route
       } else {
-        alert('Signup successful, but no token received.');
+        toast.success('Signup successful, but no token received.');
         navigate('/login');
       }
     } catch (error: any) {
-      alert(`Signup error: ${error.message}`);
+      toast.error(error.message || 'Signup failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -212,7 +214,7 @@ const SignUpPage: React.FC = () => {
               </div>
 
               {/* Terms */}
-              <div className="flex items-center">
+              {/* <div className="flex items-center">
                 <input
                   id="terms"
                   name="terms"
@@ -230,7 +232,7 @@ const SignUpPage: React.FC = () => {
                     Privacy Policy
                   </button>
                 </label>
-              </div>
+              </div> */}
 
               {/* Submit */}
               <button

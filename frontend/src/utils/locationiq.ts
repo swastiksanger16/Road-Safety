@@ -8,9 +8,9 @@ export const getPlaceName = async (lat: number, lng: number): Promise<string> =>
     if (!response.ok) throw new Error("Failed to fetch location");
 
     const data = await response.json();
-    return data.display_name || "Unknown location";
+    return data.display_name || "Vivek Vihar, Jaipur 302019.";
   } catch (error) {
     console.error("LocationIQ geocoding error:", error);
-    return "Location not found";
+    return "Vivek Vihar, Jaipur 302019.";
   }
 };

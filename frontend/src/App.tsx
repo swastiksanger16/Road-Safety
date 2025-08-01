@@ -8,6 +8,7 @@ import OverviewPage from './components/OverviewPage';
 import Profile from './components/Profile';
 import Feed from './components/Feed';
 import AdminPanel from './components/AdminPanel'; // ✅ Import Admin Panel
+import { Toaster } from 'react-hot-toast';
 
 // Private route wrapper
 const ProtectedRoutes: React.FC = () => {
@@ -40,6 +41,7 @@ const App: React.FC = () => {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
+        <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
       </div>
     </Router>
   );
