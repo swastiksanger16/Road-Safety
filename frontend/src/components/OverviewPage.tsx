@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Camera, Navigation } from 'lucide-react';
 import HazardForm from './HazardForm';
 import Feed from './Feed';
+import toast from 'react-hot-toast';
 
 const OverviewPage = () => {
   const [showHazardForm, setShowHazardForm] = useState(false);
@@ -17,12 +18,11 @@ const OverviewPage = () => {
           };
           setUserLocation(location);
 
-          // ✅ Save to localStorage for Profile.tsx
           localStorage.setItem('user_location', JSON.stringify(location));
         },
         (error) => {
           console.error('Error getting location:', error);
-          alert('Location access is required to view nearby hazards.');
+          toast.error('Location access is required to view nearby hazards.');
         },
         { enableHighAccuracy: true, timeout: 10000 }
       );
@@ -58,8 +58,9 @@ const OverviewPage = () => {
           throw new Error("Failed to update location");
         }
 
-        console.log("User location updated successfully");
+        toast.success("Location updated successfully");
       } catch (error) {
+        toast.error("Error updating location.");
         console.error("Error updating location:", error);
       }
     };
@@ -75,7 +76,6 @@ const OverviewPage = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50 relative overflow-hidden">
       {/* Main Content */}
       <main className="max-w-4xl mx-auto px-4 py-8 pt-24">
-        {/* Feed Section */}
         {userLocation && <Feed userLocation={userLocation} />}
       </main>
 

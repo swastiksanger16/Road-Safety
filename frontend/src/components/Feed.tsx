@@ -4,6 +4,7 @@ import ReportCard from './ReportCard';
 import { useNavigate } from 'react-router-dom';
 import { getPlaceName } from '../utils/locationiq';
 // import { getPlaceName } from '../utils/geolocation';
+import toast from 'react-hot-toast';
 
 interface Report {
   id: string;
@@ -97,8 +98,11 @@ const Feed: React.FC<FeedProps> = ({ userLocation }) => {
       );
 
       setReports(formattedReports);
-    } catch (error) {
-      console.error('Error fetching reports:', error);
+    } catch (error: any) {
+      if (error.name !== 'AbortError') {
+        console.error('Error fetching reports:', error);
+        toast.error('Failed to fetch reports. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

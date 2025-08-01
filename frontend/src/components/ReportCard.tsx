@@ -1,5 +1,7 @@
 import CommentSection from './CommentSection';
 import React, { useState } from 'react';
+import toast, { Toaster } from 'react-hot-toast';
+
 import {
   MapPin,
   ThumbsUp,
@@ -66,10 +68,12 @@ const ReportCard: React.FC<ReportCardProps> = ({
 
     if (!res.ok) throw new Error("Failed to send upvote email");
 
-    alert("Notification email sent successfully!");
+    // alert("Notification email sent successfully!");
+    toast.success("Notification email sent successfully!");
   } catch (error) {
     console.error(error);
-    alert("Failed to send notification");
+    // alert("Failed to send notification");
+    toast.success("Failed to send notification");
   }
 };
 

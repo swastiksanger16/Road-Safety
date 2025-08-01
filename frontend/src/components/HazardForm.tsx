@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Camera, MapPin, Upload, AlertTriangle } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface HazardFormProps {
   isOpen: boolean;
@@ -28,7 +29,10 @@ const HazardForm: React.FC<HazardFormProps> = ({ isOpen, onClose, userLocation }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedImage || !hazardType || !userLocation) return;
+    if (!selectedImage || !hazardType || !userLocation) {
+      toast.error('Please complete all required fields.');
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -52,15 +56,18 @@ const HazardForm: React.FC<HazardFormProps> = ({ isOpen, onClose, userLocation }
       });
 
       if (res.status === 401) {
-        alert('Unauthorized! Your session might have expired. Please log in again.');
+        toast.error('Unauthorized! Please log in again.');
         return;
       }
       if (!res.ok) throw new Error(`Submission failed with status ${res.status}`);
 
       const data = await res.json();
-      console.log('Hazard report submitted:', data);
+      if (!res.ok || data.success === false) {
+  toast.error(data.message);
+  return;
+}
 
-      alert('Hazard reported successfully! Thank you for keeping our roads safe.');
+toast.success('Hazard reported successfully! Thank you for keeping roads safe.');
 
       // Reset state and close modal
       setSelectedImage(null);
@@ -70,7 +77,7 @@ const HazardForm: React.FC<HazardFormProps> = ({ isOpen, onClose, userLocation }
       onClose();
     } catch (error) {
       console.error('Error reporting hazard:', error);
-      alert('There was an error submitting the report. Please try again.');
+       toast.error('Uploaded image is not a valid hazard. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

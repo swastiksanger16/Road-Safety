@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import ReportCard from './ReportCard';
-import { getPlaceName } from '../utils/locationiq'; // ✅ Import place name utility
-// import { getPlaceName } from '../utils/geolocation';
+import { getPlaceName } from '../utils/locationiq';
+import toast from 'react-hot-toast';
 
 interface Hazard {
   id: string;
@@ -18,7 +18,7 @@ interface Hazard {
   placeName?: string;
   distance?: number;
   created_at?: string;
-  timeAgo?: string; 
+  timeAgo?: string;
 }
 
 const AdminPanel: React.FC = () => {
@@ -60,7 +60,6 @@ const AdminPanel: React.FC = () => {
       });
       const data = await response.json();
 
-      // ✅ Fetch place names for each hazard
       const formattedHazards = await Promise.all(
         data.map(async (hazard: Hazard) => {
           const lat = hazard.location?.lat ?? hazard.lat;
@@ -73,14 +72,15 @@ const AdminPanel: React.FC = () => {
               : 0;
 
           const timestamp = hazard.created_at || hazard.timestamp || '';
-    const timeAgo = getTimeAgo(timestamp);
-          
-          return { ...hazard, placeName, distance, lat, lng };
+          const timeAgo = getTimeAgo(timestamp);
+
+          return { ...hazard, placeName, distance, lat, lng, timeAgo };
         })
       );
 
       setHazards(formattedHazards);
     } catch (error) {
+      toast.error('Failed to fetch hazards');
       console.error('Failed to fetch hazards:', error);
     } finally {
       setLoading(false);
@@ -92,12 +92,21 @@ const AdminPanel: React.FC = () => {
     if (!window.confirm('Are you sure you want to delete this report?')) return;
 
     try {
-      await fetch(`http://localhost:8000/api/hazards/${id}`, {
+      const response = await fetch(`http://localhost:8000/api/hazards/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-      setHazards((hazards) => hazards.filter((h) => h.id !== id));
+
+      const result = await response.json();
+
+      if (response.ok && result.success) {
+        setHazards((hazards) => hazards.filter((h) => h.id !== id));
+        toast.success(result.message);
+      } else {
+        toast.error(result.message || 'Failed to delete hazard');
+      }
     } catch (error) {
+      toast.error('An unexpected error occurred while deleting.');
       console.error('Failed to delete hazard:', error);
     }
   };
@@ -114,35 +123,39 @@ const AdminPanel: React.FC = () => {
         body: JSON.stringify({ status }),
       });
 
+      const result = await response.json();
+
       if (response.ok) {
-        const updatedHazard = await response.json();
         setHazards((prev) =>
-          prev.map((h) => (h.id === id ? { ...h, status: updatedHazard.status } : h))
+          prev.map((h) => (h.id === id ? { ...h, status: result.status } : h))
         );
+        toast.success('Status updated successfully');
+      } else {
+        toast.error(result.message || 'Failed to update status');
       }
     } catch (error) {
+      toast.error('An unexpected error occurred while updating status.');
       console.error('Error updating status:', error);
     }
   };
-  
+
   const getTimeAgo = (dateString: string) => {
-  const utcDate = new Date(dateString);
-  const localDate = new Date(utcDate.getTime() + new Date().getTimezoneOffset() * -60000);
-  const now = new Date();
+    const utcDate = new Date(dateString);
+    const localDate = new Date(utcDate.getTime() + new Date().getTimezoneOffset() * -60000);
+    const now = new Date();
 
-  const diffInMs = now.getTime() - localDate.getTime();
-  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+    const diffInMs = now.getTime() - localDate.getTime();
+    const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
 
-  if (diffInMinutes < 1) return 'just now';
-  if (diffInMinutes < 60) return `${diffInMinutes} min${diffInMinutes > 1 ? 's' : ''} ago`;
+    if (diffInMinutes < 1) return 'just now';
+    if (diffInMinutes < 60) return `${diffInMinutes} min${diffInMinutes > 1 ? 's' : ''} ago`;
 
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) return `${diffInHours} hr${diffInHours > 1 ? 's' : ''} ago`;
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours} hr${diffInHours > 1 ? 's' : ''} ago`;
 
-  const diffInDays = Math.floor(diffInHours / 24);
-  return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
-};
-
+    const diffInDays = Math.floor(diffInHours / 24);
+    return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+  };
 
   useEffect(() => {
     fetchAllHazards();
@@ -166,13 +179,12 @@ const AdminPanel: React.FC = () => {
               upvotes: hazard.upvotes,
               downvotes: hazard.downvotes,
               userVote: null,
-              placeName: hazard.placeName, // ✅ Added place name
+              placeName: hazard.placeName,
             }}
             onVote={() => {}}
-            timeAgo={hazard.timeAgo} 
+            timeAgo={hazard.timeAgo}
           />
 
-          {/* Admin Controls */}
           <div className="flex gap-4 mt-2">
             <button
               onClick={() => deleteHazard(hazard.id)}

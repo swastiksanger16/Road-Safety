@@ -18,7 +18,7 @@ def send_hazard_email(recipient_email: str, hazard_type: str, location: str, sev
         from_email = os.getenv("FROM_EMAIL")
 
         message = MIMEMultipart()
-        message["From"] = f"Hazard Alert System <{from_email}>"
+        message["From"] = f"Satraksha Hazard Alert <{from_email}>"
         message["To"] = recipient_email
         message["Subject"] = f"Urgent: {hazard_type} Alert in {location}"
         message["X-Priority"] = "1"
@@ -34,7 +34,7 @@ def send_hazard_email(recipient_email: str, hazard_type: str, location: str, sev
         {instructions}
         
         ---
-        This is an automated alert from the Hazard Monitoring System.
+        This is an automated alert from the Satrakhs Hazard Monitoring System.
         """
         message.attach(MIMEText(body, "plain"))
 

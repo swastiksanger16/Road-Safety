@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, MapPin } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface TokenWithUser {
   access_token: string;
@@ -50,11 +51,11 @@ const LoginPage: React.FC = () => {
       // Save token and user details
       localStorage.setItem('access_token', data.access_token);
       localStorage.setItem('user', JSON.stringify(data.user));
-
+      toast.success(`Welcome back, ${data.user.name}!`);
       navigate('/overview');
-    } catch (error) {
+    } catch (error : any) {
       console.error(error);
-      alert('Invalid email or password');
+      toast.error(error.message || 'Login failed. Please try again.');
     } finally {
       setIsLoading(false);
     }

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { MapPin, Shield, Menu, X } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const Header: React.FC = () => {
   const location = useLocation();
@@ -41,6 +42,7 @@ const Header: React.FC = () => {
     setIsLoggedIn(false);
     setUserName('');
     setUserRole('user');
+    toast.success('You have been logged out successfully.');
     navigate('/');
   };
 
