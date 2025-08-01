@@ -12,12 +12,13 @@ from models.users import Users
 from schemas.hazard import HazardRead, HazardStatusUpdate
 from schemas.location import UserCurrentLocationUpdate
 import os
+from core.ml_model import is_pothole
 
 router = APIRouter()
 
 
 @router.post("/", response_model=HazardRead)
-def report_hazard(
+async def report_hazard(
     background_tasks: BackgroundTasks,
     lat: float = Form(...),
     lng: float = Form(...),
@@ -26,10 +27,21 @@ def report_hazard(
     file: UploadFile = File(...),
     session: Session = Depends(get_session),
     current_user: Users = Depends(get_current_user)
-    
 ):
+    # ✅ Read image bytes for ML check
+    image_bytes = await file.read()
+
+    # ✅ ML check only for pothole type
+    if hazard_type.lower() == "pothole" and not is_pothole(image_bytes):
+        raise HTTPException(status_code=400, detail="Uploaded image is not a pothole.")
+
+    # ✅ Reset file pointer so S3 can read it
+    file.file.seek(0)
+
+    # ✅ Upload to S3
     s3_key = upload_to_s3(file)
 
+    # ✅ Create hazard entry
     hazard = create_hazard(
         lat=lat,
         lng=lng,
@@ -40,6 +52,7 @@ def report_hazard(
         session=session
     )
 
+    # ✅ Update user location
     upsert_user_location(
         session,
         UserCurrentLocationUpdate(
@@ -49,6 +62,7 @@ def report_hazard(
         )
     )
 
+    # ✅ Send notification for accidents
     if hazard_type.lower() == "accident":
         traffic_email = os.getenv("TRAFFIC_AUTH_EMAIL")
         background_tasks.add_task(
@@ -60,12 +74,11 @@ def report_hazard(
             "Immediate action required!"
         )
 
-
+    # ✅ Notify nearby users
     nearby_users = get_users_near_location(session, lat, lng, radius_km=2)
     print(f"Nearby users for hazard {hazard.id}: {[u.user_id for u in nearby_users]}")
 
     return hazard
-
 
 @router.get("/", response_model=List[HazardRead])
 def get_hazards(session: Session = Depends(get_session)):
