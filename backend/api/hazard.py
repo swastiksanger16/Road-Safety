@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, Path
+from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, Path, BackgroundTasks
 from sqlmodel import Session, select
 from typing import List
-
+from core.notification_service import send_hazard_email
 from db.session import get_session
 from services.hazard_service import create_hazard
 from services.location_service import upsert_user_location, get_users_near_location, haversine_distance
@@ -11,12 +11,14 @@ from models.hazard import Hazard
 from models.users import Users
 from schemas.hazard import HazardRead, HazardStatusUpdate
 from schemas.location import UserCurrentLocationUpdate
+import os
 
 router = APIRouter()
 
 
 @router.post("/", response_model=HazardRead)
 def report_hazard(
+    background_tasks: BackgroundTasks,
     lat: float = Form(...),
     lng: float = Form(...),
     hazard_type: str = Form(...),
@@ -24,6 +26,7 @@ def report_hazard(
     file: UploadFile = File(...),
     session: Session = Depends(get_session),
     current_user: Users = Depends(get_current_user)
+    
 ):
     s3_key = upload_to_s3(file)
 
@@ -46,6 +49,18 @@ def report_hazard(
         )
     )
 
+    if hazard_type.lower() == "accident":
+        traffic_email = os.getenv("TRAFFIC_AUTH_EMAIL")
+        background_tasks.add_task(
+            send_hazard_email,
+            traffic_email,
+            hazard_type,
+            f"Lat: {lat}, Lng: {lng}",
+            "High",
+            "Immediate action required!"
+        )
+
+
     nearby_users = get_users_near_location(session, lat, lng, radius_km=2)
     print(f"Nearby users for hazard {hazard.id}: {[u.user_id for u in nearby_users]}")
 
@@ -64,7 +79,7 @@ def get_hazards(session: Session = Depends(get_session)):
 def get_nearby_hazards(
     lat: float,
     lng: float,
-    radius_km: float = 8,
+    radius_km: float = 3,
     session: Session = Depends(get_session),
     current_user: Users = Depends(get_current_user)
 ):
@@ -130,3 +145,31 @@ def update_hazard_status(
 
     hazard.photo_url = get_presigned_url(hazard.photo_url)
     return hazard
+
+@router.post("/{hazard_id}/upvote")
+def send_upvote_email(
+    hazard_id: str,
+    background_tasks: BackgroundTasks,
+    session: Session = Depends(get_session),
+    current_user: Users = Depends(get_current_user)
+):
+    # Find hazard
+    hazard = session.get(Hazard, hazard_id)
+    if not hazard:
+        raise HTTPException(status_code=404, detail="Hazard not found")
+
+    # Get reporter email
+    reporter = session.get(Users, hazard.reported_by)
+    recipient_email = reporter.email if reporter else os.getenv("ADMIN_EMAIL")
+
+    # Send email only (no DB update)
+    background_tasks.add_task(
+        send_hazard_email,
+        recipient_email,
+        hazard.hazard_type,
+        f"Lat: {hazard.lat}, Lng: {hazard.lng}",
+        "Info",
+        f"Someone upvoted your hazard report (ID: {hazard.id})."
+    )
+
+    return {"message": "Email sent successfully"}

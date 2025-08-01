@@ -3,7 +3,6 @@ from uuid import UUID
 from datetime import datetime
 from typing import Optional
 
-
 class HazardBase(BaseModel):
     lat: float
     lng: float
@@ -13,10 +12,8 @@ class HazardBase(BaseModel):
     status: Optional[str] = "unresolved"
     source: Optional[str] = "user"
 
-
 class HazardCreate(HazardBase):
     pass
-
 
 class HazardRead(HazardBase):
     id: int
@@ -30,7 +27,8 @@ class HazardRead(HazardBase):
 class HazardStatusUpdate(BaseModel):
     status: str
 
-# class HazardWithVotes(HazardRead):
-#     upvotes: int
-#     downvotes: int
-#     user_vote: Optional[str] = None
+# ✅ New schema for feed
+class HazardWithVotes(HazardRead):
+    upvotes: int
+    downvotes: int
+    userVote: Optional[str] = None

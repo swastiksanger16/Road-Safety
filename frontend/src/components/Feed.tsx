@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, Clock, Users, RefreshCw } from 'lucide-react';
 import ReportCard from './ReportCard';
 import { useNavigate } from 'react-router-dom';
+import { getPlaceName } from '../utils/locationiq';
+// import { getPlaceName } from '../utils/geolocation';
 
 interface Report {
   id: string;
@@ -9,11 +11,12 @@ interface Report {
   description: string;
   location: { lat: number; lng: number };
   distance: number;
-  timestamp: string; // ISO string from API
+  timestamp: string;
   upvotes: number;
   downvotes: number;
   userVote: 'up' | 'down' | null;
   status: string;
+  placeName: string;
 }
 
 interface FeedProps {
@@ -21,7 +24,7 @@ interface FeedProps {
 }
 
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371; // Radius of Earth in km
+  const R = 6371;
   const dLat = (lat2 - lat1) * (Math.PI / 180);
   const dLon = (lon2 - lon1) * (Math.PI / 180);
   const a =
@@ -39,7 +42,7 @@ const Feed: React.FC<FeedProps> = ({ userLocation }) => {
   const [filter, setFilter] = useState<'all' | 'recent'>('all');
   const navigate = useNavigate();
 
-  // Fetch reports from backend
+  // ✅ Fetch reports including reverse geocoded place names
   const fetchReports = async () => {
     if (!userLocation) return;
 
@@ -60,7 +63,7 @@ const Feed: React.FC<FeedProps> = ({ userLocation }) => {
       if (!response.ok) {
         if (response.status === 401) {
           localStorage.removeItem('access_token');
-          navigate('/login'); // Redirect to login if token invalid
+          navigate('/login');
           return;
         }
         throw new Error(`Error ${response.status}`);
@@ -68,24 +71,30 @@ const Feed: React.FC<FeedProps> = ({ userLocation }) => {
 
       const data = await response.json();
 
-      const formattedReports = data.map((hazard: any) => {
-        const dist = userLocation
-          ? calculateDistance(userLocation.lat, userLocation.lng, hazard.lat, hazard.lng)
-          : 0;
+      // ✅ Handle async place name fetch
+      const formattedReports = await Promise.all(
+        data.map(async (hazard: any) => {
+          const dist = userLocation
+            ? calculateDistance(userLocation.lat, userLocation.lng, hazard.lat, hazard.lng)
+            : 0;
 
-        return {
-          id: hazard.id.toString(),
-          image: hazard.photo_url,
-          description: hazard.description,
-          location: { lat: hazard.lat, lng: hazard.lng },
-          distance: dist,
-          timestamp: hazard.created_at,
-          upvotes: hazard.upvotes ?? 0,
-          downvotes: hazard.downvotes ?? 0,
-          userVote: null,
-          status: hazard.status ?? 'Unresolved',
-        };
-      });
+          const placeName = await getPlaceName(hazard.lat, hazard.lng);
+
+          return {
+            id: hazard.id.toString(),
+            image: hazard.photo_url,
+            description: hazard.description,
+            location: { lat: hazard.lat, lng: hazard.lng },
+            distance: dist,
+            placeName,
+            timestamp: hazard.created_at,
+            upvotes: hazard.upvotes ?? 0,
+            downvotes: hazard.downvotes ?? 0,
+            userVote: null,
+            status: hazard.status ?? 'Unresolved',
+          };
+        })
+      );
 
       setReports(formattedReports);
     } catch (error) {
@@ -128,7 +137,7 @@ const Feed: React.FC<FeedProps> = ({ userLocation }) => {
         return Date.now() - reportDate.getTime() < 2 * 24 * 60 * 60 * 1000;
       case 'all':
       default:
-        return report.distance <= 2;
+        return report.distance <= 3;
     }
   });
 
@@ -165,8 +174,8 @@ const Feed: React.FC<FeedProps> = ({ userLocation }) => {
               <h2 className="text-2xl font-bold text-gray-800">Community Reports</h2>
               <p className="text-gray-600">
                 {filter === 'recent'
-                  ? 'Recent hazards reported in the last 2 days (within 2km)'
-                  : 'All hazards reported within 2km of your location'}
+                  ? 'Recent hazards reported in the last 2 days (within 3km)'
+                  : 'All hazards reported within 3km of your location'}
               </p>
             </div>
           </div>

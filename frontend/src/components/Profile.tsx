@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import ReportCard from './ReportCard';
+import { getPlaceName } from '../utils/locationiq';
+//import { getPlaceName } from '../utils/geolocation';
 
 interface Report {
   id: string;
@@ -11,12 +13,37 @@ interface Report {
   upvotes: number;
   downvotes: number;
   userVote: 'up' | 'down' | null;
+  placeName?: string;
 }
 
 const Profile: React.FC = () => {
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+
   const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+  // ✅ Fetch saved location from localStorage
+  useEffect(() => {
+    const savedLocation = localStorage.getItem('user_location');
+    if (savedLocation) {
+      setUserLocation(JSON.parse(savedLocation));
+    }
+  }, []);
+
+  // ✅ Distance calculation function (same as Feed)
+  function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(lat1 * (Math.PI / 180)) *
+        Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLon / 2) ** 2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
 
   useEffect(() => {
     const fetchReports = async () => {
@@ -33,20 +60,28 @@ const Profile: React.FC = () => {
         }
 
         const data = await response.json();
-        const formatted = data.map((hazard: any) => ({
-          id: hazard.id.toString(),
-          image: hazard.photo_url,
-          description: hazard.description,
-          location: {
-            lat: hazard.lat,
-            lng: hazard.lng,
-          },
-          distance: hazard.distance ?? 0,
-          timestamp: hazard.created_at,
-          upvotes: hazard.upvotes || 0,
-          downvotes: hazard.downvotes || 0,
-          userVote: hazard.userVote || null,
-        }));
+
+        const formatted = await Promise.all(
+          data.map(async (hazard: any) => {
+            const placeName = await getPlaceName(hazard.lat, hazard.lng);
+            const distance = userLocation
+              ? calculateDistance(userLocation.lat, userLocation.lng, hazard.lat, hazard.lng)
+              : 0;
+
+            return {
+              id: hazard.id.toString(),
+              image: hazard.photo_url,
+              description: hazard.description,
+              location: { lat: hazard.lat, lng: hazard.lng },
+              distance,
+              timestamp: hazard.created_at,
+              upvotes: hazard.upvotes || 0,
+              downvotes: hazard.downvotes || 0,
+              userVote: hazard.userVote || null,
+              placeName,
+            };
+          })
+        );
 
         setReports(formatted);
       } catch (error) {
@@ -57,7 +92,7 @@ const Profile: React.FC = () => {
     };
 
     fetchReports();
-  }, []);
+  }, [userLocation]); // ✅ re-fetch if location is updated
 
   const handleVote = () => {
     // Dummy function for voting in profile view
@@ -81,9 +116,7 @@ const Profile: React.FC = () => {
         ) : reports.length === 0 ? (
           <div className="bg-white/70 backdrop-blur-lg rounded-3xl p-12 text-center shadow-xl border border-white/50">
             <h3 className="text-xl font-semibold text-gray-600 mb-2">No Reports Found</h3>
-            <p className="text-gray-500">
-              You haven't submitted any reports yet.
-            </p>
+            <p className="text-gray-500">You haven't submitted any reports yet.</p>
           </div>
         ) : (
           <div className="space-y-6">
