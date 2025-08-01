@@ -16,12 +16,13 @@ interface Report {
   image?: string;
   description: string;
   location: { lat: number; lng: number };
-  distance?: number; // made optional
+  distance?: number;
   timestamp: string;
   upvotes: number;
   downvotes: number;
-  userVote?: 'up' | 'down' | null; // made optional
+  userVote?: 'up' | 'down' | null;
   status?: string;
+  placeName?: string; // ✅ Added for dynamic location name
 }
 
 interface ReportCardProps {
@@ -52,6 +53,29 @@ const ReportCard: React.FC<ReportCardProps> = ({
     return { type: 'Hazard', color: 'text-purple-600', bg: 'bg-purple-100' };
   };
 
+  const handleUpvote = async () => {
+  try {
+    const token = localStorage.getItem("access_token");
+    const headers: Record<string, string> = {};
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+
+    const res = await fetch(`http://localhost:8000/api/hazards/${report.id}/upvote`, {
+      method: "POST",
+      headers,
+    });
+
+    if (!res.ok) throw new Error("Failed to send upvote email");
+
+    alert("Notification email sent successfully!");
+  } catch (error) {
+    console.error(error);
+    alert("Failed to send notification");
+  }
+};
+
+
+
+
   const hazardInfo = getHazardType(report.description);
   const reportIdNumber = parseInt(report.id, 10);
 
@@ -74,18 +98,17 @@ const ReportCard: React.FC<ReportCardProps> = ({
           </div>
         )}
         {report.status && (
-  <div
-    className={`absolute bottom-4 left-4 px-3 py-1 rounded-full text-sm font-semibold backdrop-blur-sm shadow-md
-      ${report.status.toLowerCase() === 'resolved' 
-        ? 'bg-green-100 text-green-700' 
-        : report.status.toLowerCase() === 'in progress' 
-        ? 'bg-yellow-100 text-yellow-700' 
-        : 'bg-red-100 text-red-700'}`}
-  >
-    {report.status}
-  </div>
-)}
-
+          <div
+            className={`absolute bottom-4 left-4 px-3 py-1 rounded-full text-sm font-semibold backdrop-blur-sm shadow-md
+              ${report.status.toLowerCase() === 'resolved' 
+                ? 'bg-green-100 text-green-700' 
+                : report.status.toLowerCase() === 'in progress' 
+                ? 'bg-yellow-100 text-yellow-700' 
+                : 'bg-red-100 text-red-700'}`}
+          >
+            {report.status}
+          </div>
+        )}
       </div>
 
       <div className="p-6 space-y-4">
@@ -99,7 +122,8 @@ const ReportCard: React.FC<ReportCardProps> = ({
             </div>
             <div className="flex items-center space-x-1">
               <MapPin className="w-4 h-4" />
-              <span>Public Road</span>
+              {/* ✅ Dynamic place name */}
+              <span>{report.placeName || 'Unknown location'}</span>
             </div>
           </div>
         </div>
@@ -125,16 +149,18 @@ const ReportCard: React.FC<ReportCardProps> = ({
           ) : (
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => onVote?.(report.id, 'up')}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-xl font-medium transition-all ${
-                  report.userVote === 'up'
-                    ? 'bg-green-100 text-green-700 shadow-sm'
-                    : 'hover:bg-green-50 text-gray-600 hover:text-green-600'
-                }`}
-              >
-                <ThumbsUp className="w-4 h-4" />
-                <span>{report.upvotes}</span>
-              </button>
+  onClick={handleUpvote}
+  className={`flex items-center space-x-2 px-4 py-2 rounded-xl font-medium transition-all ${
+    report.userVote === 'up'
+      ? 'bg-green-100 text-green-700 shadow-sm'
+      : 'hover:bg-green-50 text-gray-600 hover:text-green-600'
+  }`}
+>
+  <ThumbsUp className="w-4 h-4" />
+  <span>{report.upvotes}</span>
+</button>
+
+
 
               <button
                 onClick={() => onVote?.(report.id, 'down')}
